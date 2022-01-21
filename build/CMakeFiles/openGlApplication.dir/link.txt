@@ -1,1 +1,0 @@
-/usr/bin/c++ -rdynamic CMakeFiles/openGlApplication.dir/main.cpp.o -o openGlApplication  glfw-3.3.5/src/libglfw3.a glad/libglad.a -lrt -lm -ldl -lX11 -lpthread 
