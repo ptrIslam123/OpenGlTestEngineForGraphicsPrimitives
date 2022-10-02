@@ -404,7 +404,7 @@ std::auto_ptr<*>{
 ;  std::basic_string from <string>
 ;------------------------------------------------------------------------------
 ; basic_string is previewed with its stored string.
-; It has [size] and [capacity] children, followed by [0], [1], [2], etc. children
+; It has [size] and [vertexesCapacity] children, followed by [0], [1], [2], etc. children
 ; displaying its stored characters.
 ; The ($e._Myres) < ($e._BUF_SIZE) test determines whether the Small String Optimization
 ; is in effect.
@@ -416,7 +416,7 @@ std::basic_string<char,*>{
 	children (
 		#(
 			#([size] : $e._Mysize),
-			#([capacity] : $e._Myres),
+			#([vertexesCapacity] : $e._Myres),
 			#if (($e._Myres) < ($e._BUF_SIZE)) (
 				#array(expr: $e._Bx._Buf[$i], size: $e._Mysize)
 			) #else (
@@ -432,7 +432,7 @@ std::basic_string<unsigned short,*>|std::basic_string<wchar_t,*>{
 	children (
 		#(
 			#([size] : $e._Mysize),
-			#([capacity] : $e._Myres),
+			#([vertexesCapacity] : $e._Myres),
 			#if (($e._Myres) < ($e._BUF_SIZE)) (
 				#array(expr: $e._Bx._Buf[$i], size: $e._Mysize)
 			) #else (
@@ -473,7 +473,7 @@ std::vector<bool,*>{
 	children (
 		#(
 			#([size] : $e._Mysize),
-			#([capacity] : ($e._Myvec._Myend - $e._Myvec._Myfirst) * _VBITS),
+			#([vertexesCapacity] : ($e._Myvec._Myend - $e._Myvec._Myfirst) * _VBITS),
 			#array(
 				expr: (bool)(($e._Myvec._Myfirst[$i / _VBITS] >> ($i % _VBITS)) & 1),
 				size: $e._Mysize
@@ -498,7 +498,7 @@ std::_Vb_reference<*>|std::_Vb_iterator<*>|std::_Vb_const_iterator<*>{
 ;  std::vector from <vector>
 ;------------------------------------------------------------------------------
 ; vector is previewed with "[<size>](<elements>)".
-; It has [size] and [capacity] children, followed by its elements.
+; It has [size] and [vertexesCapacity] children, followed by its elements.
 ; The other containers follow its example.
 std::vector<*>{
 	preview (
@@ -517,7 +517,7 @@ std::vector<*>{
 	children (
 		#(
 			#([size] : $e._Mylast - $e._Myfirst),
-			#([capacity] : $e._Myend - $e._Myfirst),
+			#([vertexesCapacity] : $e._Myend - $e._Myfirst),
 			#array(
 				expr: $e._Myfirst[$i],
 				size: $e._Mylast - $e._Myfirst

@@ -1,65 +1,86 @@
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
- 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb/stb_image.h"
-
-#include "glm/glm/vec2.hpp"
-
 #include <iostream>
- 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow *window);
- 
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
- 
-int main()
-{
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
- 
- 
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "OpenGL for Ravesli.com", NULL, NULL);
-    if (window == NULL)
-    {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
-    glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
- 
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        return -1;
-    }   
 
-    while (!glfwWindowShouldClose(window))
-    {
-        processInput(window);
-		
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
- 
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-    }
- 
-    glfwTerminate();
-    return 0;
-}
- 
-void processInput(GLFWwindow *window)
-{
-    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-}
- 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
+#include <glm/mat3x3.hpp>
+#include <glm/mat4x4.hpp>
+#include <glm/vec3.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#include "shader/shader.h"
+#include "window/context_window.h"
+#include "graphics/graphics.h"
+#include "primitives/triangle.h"
+#include "primitives/rectangle.h"
+#include "primitives/quad.h"
+
+using namespace graphics;
+
+void resizeWindowEventHandler(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
+}
+
+int main(int argc, char **argv) {
+    if (argc != 3) {
+        std::cerr << "No passing input args: <vertexShaderPath> <fragmentShaderPath>"
+                  << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    constexpr auto WINDOW_WIDTH = 800;
+    constexpr auto WINDOW_HEIGHT = 600;
+    Window window(WINDOW_WIDTH, WINDOW_HEIGHT, "OpenGl application");
+    window.registerCallbackForResizeWindow(resizeWindowEventHandler);
+
+    Graphics graphics;
+    {
+        Shader shader;
+        const std::string vertexShaderFileName(argv[1]);
+        const std::string fragmentShaderFileName(argv[2]);
+        shader.create(vertexShaderFileName, fragmentShaderFileName);
+        graphics = Graphics(shader);
+    }
+
+    /**
+     * @details Обычно, применение матрицы трансформации к примитивам применяется в самих шейдерах
+     * (осущ применение матрицы трансформации для каждой вершины примитивов и отсылается на карточку через
+     *  uniform переменные). В данном случае сделано иначе для простой демонстрации
+     *  (для общего метода Primitive::transform)
+     */
+    {
+        const util::PointF32 p1(1.0f, 1.0f);
+        const util::PointF32 p2(0.0f, 0.0f);
+        const util::PointF32 p3(1.0f, 0.0f);
+        const auto transformMat =
+                glm::scale(glm::mat4(1.0f), glm::vec3(0.75f, 0.75f, 1.0f));
+        Triangle triangle(p1, p2, p3);
+        triangle.transform(transformMat);
+        graphics.addPrimitive(triangle);
+    }
+    {
+        const util::PointF32 pos(-1.f, -1.f);
+        const util::PointF32 size(0.25f, 0.75f);
+        const auto transformMat =
+                glm::rotate(glm::mat4(1.0f), 45.0f, glm::vec3(1.0f, 1.0f, 1.0f)) *
+                glm::scale(glm::mat4(1.0f), glm::vec3(0.95f, 0.55f, 1.0f));
+        Rectangle rectangle(pos, size);
+        rectangle.transform(transformMat);
+        graphics.addPrimitive(rectangle);
+    }
+    {
+        const util::PointF32 pos(0.f, -1.f);
+        constexpr auto size = 0.5f;
+        Quad quad(pos, size);
+        const auto transformMat =
+                glm::scale(glm::mat4(1.0f), glm::vec3(0.75f, 0.75f, 1.0f)) *
+                glm::translate(glm::mat4(1.0f), glm::vec3(-1.75f, 0.75f, 0.f));
+        quad.transform(transformMat);
+        graphics.addPrimitive(quad);
+    }
+
+    graphics.loadVertexesToVMem();
+    while (!window.isClose()) {
+        window.setBackgroundColor(0.2f, 0.3f, 0.3f, 1.0f);
+        graphics.draw();
+        window.redraw();
+    }
+    return EXIT_SUCCESS;
 }
